@@ -1,0 +1,87 @@
+var KEY='shifaa_v1';
+var S={
+  files:[
+    {id:1,name:'ملخص مادة التشريح',from:'أحمد محمد',type:'ملخص',st:'p'},
+    {id:2,name:'أسئلة الفيزيولوجيا',from:'فاطمة علي',type:'أسئلة',st:'p'}
+  ],
+  msgs:[
+    {k:'سؤال',t:'متى موعد الامتحانات؟',st:'قيد المراجعة'},
+    {k:'اقتراح',t:'اقتراح بخصوص المحاضرات',st:'مجيب'}
+  ]
+};
+try{var sv=localStorage.getItem(KEY);if(sv)S=JSON.parse(sv)}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+
+function $(id){return document.getElementById(id)}
+
+function toast(t){
+  var e=$('toast');e.textContent=t;e.classList.add('on');
+  setTimeout(function(){e.classList.remove('on')},2000);
+}
+
+/* ===== الأيقونات: كل أيقونة رسم SVG، والخطوط مفصولة بـ | =====
+   لإضافة أيقونة جديدة: أضف اسم ومسار هنا، واستعملها بـ ic('الاسم') */
+var P={
+  home:'M3 11.5L12 4l9 7.5|M5.5 10v10h4.5v-6h4v6h4.5V10',
+  grid:'M4 4h6v6H4z|M14 4h6v6h-6z|M4 14h6v6H4z|M14 14h6v6h-6z',
+  shield:'M12 3l8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10V6z|M8.5 12l2.5 2.5 4.5-5',
+  chat:'M4 5h16v11H10l-5 4v-4H4z|M8 9.5h8|M8 12.5h5',
+  book:'M12 6.5C10 4.8 7 4.3 3.5 4.5v14c3.5-.2 6.5.3 8.5 2 2-1.7 5-2.2 8.5-2v-14c-3.5-.2-6.5.3-8.5 2z|M12 6.5V20.5',
+  note:'M6 3h8l5 5v13H6z|M14 3v5h5|M9 13h7|M9 17h5',
+  exam:'M6 3h8l5 5v13H6z|M14 3v5h5|M9 14.5l2 2 4-4.5',
+  cloud:'M7 18.5a4 4 0 0 1-.7-7.9 5.5 5.5 0 0 1 10.6-1.1 4.5 4.5 0 0 1 .1 9z|M12 17v-6|M9.5 13l2.5-2.5 2.5 2.5',
+  mail:'M3 6h18v12H3z|M3.5 7l8.5 6.5L20.5 7',
+  lock:'M5.5 11h13v9.5h-13z|M8.5 11V8a3.5 3.5 0 0 1 7 0v3|M12 15v2',
+  heart:'M12 20.5C5.5 15 3 11.5 3 8.5 3 6 5 4 7.5 4c1.8 0 3.5 1 4.5 2.6C13 5 14.7 4 16.5 4 19 4 21 6 21 8.5c0 3-2.5 6.5-9 12z',
+  tooth:'M7.5 3.5C5 3.5 3.5 5.5 3.5 8c0 2 1 3.5 1.5 5.5c.6 2.4.8 7 2.5 7c1.7 0 1.6-4.5 2.8-4.5h3.4c1.2 0 1.1 4.5 2.8 4.5c1.7 0 1.9-4.6 2.5-7c.5-2 1.5-3.5 1.5-5.5c0-2.5-1.5-4.5-4-4.5c-2 0-3 1-4.5 1s-2.5-1-4.5-1z',
+  plus:'M12 4v16|M4 12h16',
+  pill:'M10.5 3.8a4.6 4.6 0 0 1 6.5 6.5l-6.7 6.7a4.6 4.6 0 0 1-6.5-6.5z|M7.2 7.2l6.6 6.6',
+  clip:'M20 11.5l-8 8a5 5 0 0 1-7-7l8.5-8.5a3.3 3.3 0 0 1 4.7 4.7l-8.5 8.5a1.7 1.7 0 0 1-2.4-2.4L14 7',
+  back:'M9 5l7 7-7 7',
+  down:'M6 9l6 6 6-6'
+};
+function ic(n,c){
+  return '<svg class="ic '+(c||'')+'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'
+   +P[n].split('|').map(function(d){return '<path d="'+d+'"/>'}).join('')+'</svg>';
+}
+// أي عنصر فيه data-ic="book" يتحول لأيقونة
+function icons(){document.querySelectorAll('[data-ic]').forEach(function(e){e.innerHTML=ic(e.dataset.ic)})}
+icons();
+
+// تفاعل: الضغط على القلب أو الدكتور أو الرسوم الصغيرة يحركها
+document.addEventListener('click',function(e){
+  var m=e.target.closest('.mini,.doc,.heart');
+  if(!m)return;
+  m.classList.remove('hit');void m.getBoundingClientRect();m.classList.add('hit');
+  setTimeout(function(){m.classList.remove('hit')},700);
+});
+
+function nav(active){
+  var items=[
+    ['home.html','home','الرئيسية','home'],
+    ['sections.html','grid','الأقسام','sections'],
+    ['admin.html','shield','الإدارة','admin'],
+    ['complaints.html','chat','الشكاوى','comp']
+  ];
+  $('nav').innerHTML=items.map(function(i){
+    return '<a href="'+i[0]+'" class="'+(i[3]===active?'on':'')+'">'+ic(i[1])+i[2]+'</a>';
+  }).join('');
+}
+
+function initUpload(){
+  var m=document.createElement('div');m.id='modal';
+  m.onclick=function(e){if(e.target===m)m.classList.remove('on')};
+  m.innerHTML='<div><h3 style="margin-bottom:12px">رفع ملف</h3>'
+   +'<input id="fname" placeholder="اسم الملف (مثال: ملخص مادة التشريح)">'
+   +'<select id="ftype"><option>منهج</option><option>ملخص</option><option>أسئلة</option></select>'
+   +'<button class="btn" onclick="upload()">رفع للمراجعة</button></div>';
+  $('app').appendChild(m);
+}
+function openUpload(type){if(type)$('ftype').value=type;$('modal').classList.add('on')}
+function upload(){
+  var n=$('fname').value.trim();
+  if(!n){toast('اكتب اسم الملف');return}
+  S.files.push({id:Date.now(),name:n,from:'أحمد محمد',type:$('ftype').value,st:'p'});
+  save();$('fname').value='';$('modal').classList.remove('on');
+  toast('تم الرفع، بانتظار موافقة الإدارة');
+}''
