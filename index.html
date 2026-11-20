@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شفاء - تسجيل الدخول</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+ <main class="pg login">
+  <svg class="heart" viewBox="0 0 100 92"><path d="M50 90C12 58 2 40 2 26 2 12 13 2 27 2c10 0 18 5 23 13C55 7 63 2 73 2c14 0 25 10 25 24 0 14-10 32-48 64z" fill="#f7a8c4"/><rect x="42" y="24" width="16" height="40" rx="3" fill="#fff"/><rect x="30" y="36" width="40" height="16" rx="3" fill="#fff"/></svg>
+  <div class="logo">شفاء</div>
+  <p>مرحباً بدكتور المستقبل<br>أنتم شفاء، وسبب في شفاء بعد الله</p>
+  <div class="fld"><span data-ic="mail"></span><input id="em" type="email" placeholder="البريد الإلكتروني"></div>
+  <div class="fld"><span data-ic="lock"></span><input id="pw" type="password" placeholder="كلمة المرور"></div>
+  <button class="btn" onclick="login()">تسجيل الدخول</button>
+  <div class="note">كل يوم دراسة هو خطوة قريبة من حلمك</div>
+ </main>
+ <div id="toast"></div>
+</div>
+<script src="app.js"></script>
+<script>
+function login(){
+  if(!$('em').value.trim()||!$('pw').value){toast('اكتب البريد وكلمة المرور');return}
+  location.href='home.html';
+}
+</script>
+</body>
+                       </html>
