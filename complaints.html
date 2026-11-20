@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>شفاء - الشكاوى</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="app">
+ <main class="pg">
+  <div class="top"><b>الشكاوى والاقتراحات</b></div>
+  <div class="tabs" id="tabs"></div>
+  <textarea id="msg" placeholder="اكتب رسالتك هنا"></textarea>
+  <button class="btn" onclick="send()">إرسال</button>
+  <h3 style="margin:18px 0 10px;font-size:15px">استفساراتك السابقة</h3>
+  <div id="prev"></div>
+ </main>
+ <nav id="nav"></nav>
+ <div id="toast"></div>
+</div>
+<script src="app.js"></script>
+<script>
+nav('comp');
+var kind='شكوى';
+
+function draw(){
+  $('tabs').innerHTML=['شكوى','اقتراح','سؤال'].map(function(t){
+    return '<button class="'+(kind===t?'on':'')+'" onclick="kind=\''+t+'\';draw()">'+t+'</button>';
+  }).join('');
+  $('prev').innerHTML=S.msgs.map(function(m){
+    return '<div class="file" style="display:flex;justify-content:space-between;align-items:center"><span>'+m.k+': '+m.t+'</span><span class="pill'+(m.st==='مجيب'?' ok':'')+'">'+m.st+'</span></div>';
+  }).join('');
+}
+function send(){
+  var t=$('msg').value.trim();
+  if(!t){toast('اكتب رسالتك أولاً');return}
+  S.msgs.unshift({k:kind,t:t.slice(0,60),st:'قيد المراجعة'});
+  save();$('msg').value='';draw();toast('تم الإرسال');
+}
+draw();
+</script>
+</body>
+</html>
