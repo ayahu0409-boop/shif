@@ -1,21 +1,61 @@
+var SUPA_URL='https://atkrhmahmniiinhuooow.supabase.co';
+var SUPA_KEY='sb_publishable_u9j2dH29z8sT_jn48tdrug_4NqysjxK';
+var sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
 var KEY='shifaa_v1';
 var S={
-  files:[
-    {id:1,name:'ملخص مادة التشريح',from:'أحمد محمد',type:'ملخص',st:'p'},
-    {id:2,name:'أسئلة الفيزيولوجيا',from:'فاطمة علي',type:'أسئلة',st:'p'}
-  ],
+  files:[],
   msgs:[
     {k:'سؤال',t:'متى موعد الامتحانات؟',st:'قيد المراجعة'},
     {k:'اقتراح',t:'اقتراح بخصوص المحاضرات',st:'مجيب'}
   ]
 };
-try{var sv=localStorage.getItem(KEY);if(sv)S=JSON.parse(sv)}catch(e){}
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+// الشكاوى تبقى محفوظة بالمتصفح مؤقتاً، والملفات صارت في القاعدة
+try{var sv=JSON.parse(localStorage.getItem(KEY)||'null');if(sv&&sv.msgs)S.msgs=sv.msgs}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify({msgs:S.msgs}))}catch(e){}}
 function $(id){return document.getElementById(id)}
 function toast(t){
   var e=$('toast');e.textContent=t;e.classList.add('on');
   setTimeout(function(){e.classList.remove('on')},2000);
 }
+
+/* ===== الحساب والبيانات ===== */
+var ME=null, ADMIN=false;
+function nameFromEmail(e){return (e||'').split('@')[0]}
+
+async function loadFiles(){
+  var r=await sb.from('uploads').select('*').order('created_at',{ascending:false});
+  if(r.error){toast('تعذر تحميل الملفات');return}
+  S.files=r.data.map(function(x){
+    return {id:x.id,name:x.name,from:x.from_name,type:x.type,st:x.status,path:x.file_path,size:x.size};
+  });
+}
+async function setStatus(id,st){
+  var r=await sb.from('uploads').update({status:st}).eq('id',id);
+  if(r.error){toast('تعذر تنفيذ العملية');return false}
+  await loadFiles();return true;
+}
+async function openFile(path){
+  var w=window.open('','_blank');
+  var r=await sb.storage.from('pdfs').createSignedUrl(path,3600);
+  if(r.error){if(w)w.close();toast('تعذر فتح الملف');return}
+  if(w)w.location=r.data.signedUrl;else location.href=r.data.signedUrl;
+}
+function logout(){sb.auth.signOut().then(function(){location.href='index.html'})}
+
+// كل صفحة تنتظر READY: يرجع المستخدم أو null (وقتها يحوّل لصفحة الدخول)
+var READY=(async function(){
+  var r=await sb.auth.getSession();
+  var s=r.data.session;
+  if(!s){if(!window.PUBLIC_PAGE)location.replace('index.html');return null}
+  ME=s.user;
+  var p=await sb.from('profiles').select('is_admin').eq('id',ME.id).maybeSingle();
+  ADMIN=!!(p.data&&p.data.is_admin);
+  if(window.NEED_ADMIN&&!ADMIN){location.replace('home.html');return null}
+  if(!window.PUBLIC_PAGE)await loadFiles();
+  return ME;
+})();
+
 /* ===== الأيقونات: كل أيقونة رسم SVG، والخطوط مفصولة بـ | =====
    لإضافة أيقونة جديدة: أضف اسم ومسار هنا، واستعملها بـ ic('الاسم') */
 var P={
@@ -77,7 +117,7 @@ function initUpload(){
    +'<select id="ftype"><option>منهج</option><option>ملخص</option><option>أسئلة</option></select>'
    +'<label for="ffile" id="flabel" style="'+LABEL_STYLE+'">'+ic('cloud')+' اختر ملف PDF</label>'
    +'<input type="file" id="ffile" accept="application/pdf,.pdf" hidden>'
-   +'<button class="btn" onclick="upload()">رفع للمراجعة</button></div>';
+   +'<button class="btn" id="upbtn" onclick="upload()">رفع للمراجعة</button></div>';
   $('app').appendChild(m);
   $('ffile').addEventListener('change',pickFile);
 }
@@ -99,13 +139,21 @@ function pickFile(){
   if(!$('fname').value.trim())$('fname').value=f.name.replace(/\.pdf$/i,'');
 }
 function openUpload(type){if(type)$('ftype').value=type;$('modal').classList.add('on')}
-function upload(){
+async function upload(){
   if(!PICKED){toast('اختر ملف PDF أولاً');return}
+  if(!ME){toast('سجّل الدخول أولاً');return}
   var n=$('fname').value.trim()||PICKED.name.replace(/\.pdf$/i,'');
-  S.files.push({id:Date.now(),name:n,from:'أحمد محمد',type:$('ftype').value,st:'p',size:PICKED.size});
-  save();
+  var type=$('ftype').value, btn=$('upbtn');
+  btn.disabled=true;toast('جاري الرفع...');
+  var path='u/'+ME.id+'/'+Date.now()+'.pdf';
+  var up=await sb.storage.from('pdfs').upload(path,PICKED,{contentType:'application/pdf'});
+  if(up.error){btn.disabled=false;toast('فشل الرفع، حاول مرة أخرى');return}
+  var ins=await sb.from('uploads').insert({name:n,type:type,from_name:nameFromEmail(ME.email),file_path:path,size:PICKED.size});
+  btn.disabled=false;
+  if(ins.error){await sb.storage.from('pdfs').remove([path]);toast('فشل الحفظ، حاول مرة أخرى');return}
   $('fname').value='';
   resetFile();
   $('modal').classList.remove('on');
   toast('تم الرفع، بانتظار موافقة الإدارة');
-}
+  await loadFiles();
+  }
