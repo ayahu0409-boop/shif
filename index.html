@@ -15,17 +15,43 @@
   <p>مرحباً بدكتور المستقبل<br>أنتم شفاء، وسبب في شفاء بعد الله</p>
   <div class="fld"><span data-ic="mail"></span><input id="em" type="email" placeholder="البريد الإلكتروني"></div>
   <div class="fld"><span data-ic="lock"></span><input id="pw" type="password" placeholder="كلمة المرور"></div>
-  <button class="btn" onclick="login()">تسجيل الدخول</button>
+  <button class="btn" id="goBtn" onclick="login()">تسجيل الدخول</button>
+  <div class="note" id="sw" style="cursor:pointer;text-decoration:underline;margin-bottom:8px">ما عندك حساب؟ أنشئ حساباً</div>
   <div class="note">كل يوم دراسة هو خطوة قريبة من حلمك</div>
  </main>
  <div id="toast"></div>
 </div>
+<script>window.PUBLIC_PAGE=true</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
 <script>
-function login(){
-  if(!$('em').value.trim()||!$('pw').value){toast('اكتب البريد وكلمة المرور');return}
+var isSignup=false;
+READY.then(function(u){ if(u) location.href='home.html'; });
+
+$('sw').onclick=function(){
+  isSignup=!isSignup;
+  $('goBtn').textContent=isSignup?'إنشاء حساب':'تسجيل الدخول';
+  $('sw').textContent=isSignup?'عندك حساب؟ سجّل الدخول':'ما عندك حساب؟ أنشئ حساباً';
+};
+
+function errMsg(m){
+  if(/Invalid login/i.test(m))return 'البريد أو كلمة المرور غير صحيحة';
+  if(/already registered/i.test(m))return 'هذا البريد مسجل من قبل';
+  if(/least 6/i.test(m))return 'كلمة المرور 6 أحرف على الأقل';
+  if(/not confirmed/i.test(m))return 'أكّد بريدك أولاً';
+  return 'حدث خطأ، حاول مرة أخرى';
+}
+
+async function login(){
+  var email=$('em').value.trim(), password=$('pw').value;
+  if(!email||!password){toast('اكتب البريد وكلمة المرور');return}
+  var r=isSignup
+    ? await sb.auth.signUp({email:email,password:password})
+    : await sb.auth.signInWithPassword({email:email,password:password});
+  if(r.error){toast(errMsg(r.error.message));return}
+  if(!r.data.session){toast('تم إنشاء الحساب، أكّد بريدك ثم سجّل الدخول');return}
   location.href='home.html';
 }
 </script>
 </body>
-                       </html>
+</html>
