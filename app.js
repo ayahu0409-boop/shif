@@ -11,14 +11,11 @@ var S={
 };
 try{var sv=localStorage.getItem(KEY);if(sv)S=JSON.parse(sv)}catch(e){}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
-
 function $(id){return document.getElementById(id)}
-
 function toast(t){
   var e=$('toast');e.textContent=t;e.classList.add('on');
   setTimeout(function(){e.classList.remove('on')},2000);
 }
-
 /* ===== الأيقونات: كل أيقونة رسم SVG، والخطوط مفصولة بـ | =====
    لإضافة أيقونة جديدة: أضف اسم ومسار هنا، واستعملها بـ ic('الاسم') */
 var P={
@@ -47,7 +44,6 @@ function ic(n,c){
 // أي عنصر فيه data-ic="book" يتحول لأيقونة
 function icons(){document.querySelectorAll('[data-ic]').forEach(function(e){e.innerHTML=ic(e.dataset.ic)})}
 icons();
-
 // تفاعل: الضغط على القلب أو الدكتور أو الرسوم الصغيرة يحركها
 document.addEventListener('click',function(e){
   var m=e.target.closest('.mini,.doc,.heart');
@@ -55,7 +51,6 @@ document.addEventListener('click',function(e){
   m.classList.remove('hit');void m.getBoundingClientRect();m.classList.add('hit');
   setTimeout(function(){m.classList.remove('hit')},700);
 });
-
 function nav(active){
   var items=[
     ['home.html','home','الرئيسية','home'],
@@ -68,20 +63,49 @@ function nav(active){
   }).join('');
 }
 
+/* ===== رفع الملفات (PDF) ===== */
+var PICKED=null;
+var LABEL_STYLE='display:flex;align-items:center;justify-content:center;gap:8px;padding:16px;margin:12px 0;'
+  +'border:2px dashed var(--rose,#d6336c);border-radius:20px;color:var(--rose,#d6336c);'
+  +'background:var(--pink,#fff0f6);cursor:pointer;text-align:center;font-weight:500';
+
 function initUpload(){
   var m=document.createElement('div');m.id='modal';
   m.onclick=function(e){if(e.target===m)m.classList.remove('on')};
   m.innerHTML='<div><h3 style="margin-bottom:12px">رفع ملف</h3>'
-   +'<input id="fname" placeholder="اسم الملف (مثال: ملخص مادة التشريح)">'
+   +'<input id="fname" placeholder="اسم الملف (يتعبى تلقائياً من الـ PDF)">'
    +'<select id="ftype"><option>منهج</option><option>ملخص</option><option>أسئلة</option></select>'
+   +'<label for="ffile" id="flabel" style="'+LABEL_STYLE+'">'+ic('cloud')+' اختر ملف PDF</label>'
+   +'<input type="file" id="ffile" accept="application/pdf,.pdf" hidden>'
    +'<button class="btn" onclick="upload()">رفع للمراجعة</button></div>';
   $('app').appendChild(m);
+  $('ffile').addEventListener('change',pickFile);
+}
+function resetFile(){
+  PICKED=null;
+  $('ffile').value='';
+  $('flabel').innerHTML=ic('cloud')+' اختر ملف PDF';
+}
+function pickFile(){
+  var f=$('ffile').files[0];
+  if(!f)return;
+  var isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+  if(!isPdf){toast('اختر ملف PDF فقط');resetFile();return}
+  if(f.size>10*1024*1024){toast('حجم الملف أكبر من 10 ميجا');resetFile();return}
+  PICKED=f;
+  var l=$('flabel');
+  l.innerHTML=ic('clip');
+  l.appendChild(document.createTextNode(' '+f.name));
+  if(!$('fname').value.trim())$('fname').value=f.name.replace(/\.pdf$/i,'');
 }
 function openUpload(type){if(type)$('ftype').value=type;$('modal').classList.add('on')}
 function upload(){
-  var n=$('fname').value.trim();
-  if(!n){toast('اكتب اسم الملف');return}
-  S.files.push({id:Date.now(),name:n,from:'أحمد محمد',type:$('ftype').value,st:'p'});
-  save();$('fname').value='';$('modal').classList.remove('on');
+  if(!PICKED){toast('اختر ملف PDF أولاً');return}
+  var n=$('fname').value.trim()||PICKED.name.replace(/\.pdf$/i,'');
+  S.files.push({id:Date.now(),name:n,from:'أحمد محمد',type:$('ftype').value,st:'p',size:PICKED.size});
+  save();
+  $('fname').value='';
+  resetFile();
+  $('modal').classList.remove('on');
   toast('تم الرفع، بانتظار موافقة الإدارة');
-}''
+}
