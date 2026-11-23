@@ -17,6 +17,8 @@
  <nav id="nav"></nav>
  <div id="toast"></div>
 </div>
+<script>window.NEED_ADMIN=true</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
 <script>
 nav('admin');
@@ -30,14 +32,13 @@ function draw(){
   var f=S.files.filter(function(x){return x.st===tab});
   $('files').innerHTML=f.length?f.map(function(x){
     var b=x.st==='p'?'<div class="row"><button class="btn g" onclick="decide('+x.id+',\'a\')">موافق</button><button class="btn r" onclick="decide('+x.id+',\'r\')">رفض</button></div>':'';
-    return '<div class="file"><b class="fl">'+ic('clip')+'ملف: '+x.name+'</b><small>من: '+x.from+' • '+x.type+'</small>'+b+'</div>';
+    return '<div class="file"><b class="fl" style="cursor:pointer" onclick="openFile(\''+x.path+'\')">'+ic('clip')+'ملف: '+x.name+'</b><small>من: '+x.from+' • '+x.type+'</small>'+b+'</div>';
   }).join(''):'<div class="empty">لا توجد ملفات هنا</div>';
 }
-function decide(id,st){
-  S.files.forEach(function(x){if(x.id===id)x.st=st});
-  save();draw();toast(st==='a'?'تمت الموافقة':'تم الرفض');
+async function decide(id,st){
+  if(await setStatus(id,st)){draw();toast(st==='a'?'تمت الموافقة':'تم الرفض')}
 }
-draw();
+READY.then(function(u){if(u)draw()});
 </script>
 </body>
 </html>
