@@ -3,64 +3,50 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>شفاء - الأقسام</title>
+<title>شفاء - الرئيسية</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div id="app">
- <main class="pg" id="box"></main>
+ <main class="pg">
+  <div style="background:var(--pink);border-radius:28px;padding:18px 16px 20px;text-align:center;margin-bottom:14px">
+   <svg viewBox="0 0 300 170" style="width:100%;max-width:280px;display:block;margin:0 auto" aria-hidden="true">
+    <path d="M0 40h95l8-14 10 28 10-34 10 20h167" fill="none" stroke="#fff" stroke-width="2" opacity=".8"/>
+    <g fill="#8fd0f0"><rect x="48" y="62" width="8" height="26" rx="2"/><rect x="39" y="71" width="26" height="8" rx="2"/></g>
+    <path d="M252 62c-9-9-22 2-12 12l12 11 12-11c10-10-3-21-12-12z" fill="#f7a8c4"/>
+    <path d="M232 98c-8-4-14 3-12 12 2 8 3 18 7 18s3-8 6-8 3 8 6 8 5-10 7-18c2-9-4-16-12-12z" fill="#fff"/>
+    <rect x="52" y="105" width="40" height="16" rx="8" transform="rotate(-25 72 113)" fill="#cfe8f7"/>
+    <path d="M95 170v-30c0-18 25-28 55-28s55 10 55 28v30z" fill="#fff"/>
+    <path d="M130 114l20 26 20-26" fill="#e8f1f8" stroke="#cbd9e4"/>
+    <rect x="140" y="98" width="20" height="18" fill="#f0bd94"/>
+    <circle cx="150" cy="75" r="30" fill="#f6cba5"/>
+    <path d="M120 72c0-24 14-34 32-34 20 0 30 12 28 34-6-12-14-16-30-16s-22 4-30 16z" fill="#4a3228"/>
+    <circle cx="139" cy="79" r="2.6" fill="#3b2a24"/><circle cx="161" cy="79" r="2.6" fill="#3b2a24"/>
+    <circle cx="132" cy="88" r="5" fill="#f7a8a8" opacity=".5"/><circle cx="168" cy="88" r="5" fill="#f7a8a8" opacity=".5"/>
+    <path d="M142 89q8 7 16 0" stroke="#c0524f" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+    <path d="M127 118v14c0 12 9 18 19 18" fill="none" stroke="#4aa3d8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="150" cy="150" r="5" fill="#4aa3d8"/>
+   </svg>
+   <div style="font-size:42px;font-weight:700;color:var(--rose);line-height:1.2;margin-top:6px">شفاء</div>
+   <p style="margin:6px 0 0;font-size:14px">بوابتك في كلية الطب، كل ما تحتاجه<br>لدراستك في مكان واحد</p>
+  </div>
+
+  <a class="card" style="text-decoration:none;color:inherit" href="sections.html?t=%D9%85%D9%86%D9%87%D8%AC"><span>__BOOK__</span>المناهج</a>
+  <a class="card" style="text-decoration:none;color:inherit" href="sections.html?t=%D9%85%D9%84%D8%AE%D8%B5"><span>__NOTE__</span>ملخصات من زملائك</a>
+  <a class="card" style="text-decoration:none;color:inherit" href="sections.html?t=%D8%A3%D8%B3%D8%A6%D9%84%D8%A9"><span>__EXAM__</span>أسئلة الامتحانات السابقة</a>
+
+  <div class="note">كل يوم دراسة هو خطوة قريبة من حلمك</div>
+ </main>
  <nav id="nav"></nav>
  <div id="toast"></div>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
 <script src="app.js"></script>
 <script>
-nav('sections'); initUpload();
-
-// [اسم الأيقونة, اسم العرض, النوع المخزّن]
-var ITEMS=[['book','المناهج','منهج'],['note','الملخصات','ملخص'],['exam','أسئلة الامتحانات','أسئلة']];
-var from='general', yname='', yic='';
-
-function view(title,html,back){
-  $('box').innerHTML='<div class="top">'+(back?'<button onclick="'+back+'()">'+ic('back')+'</button>':'')+'<b>'+title+'</b></div>'+html;
-}
-function itemsHTML(f){
-  return ITEMS.map(function(i){
-    return '<button class="card" onclick="from=\''+f+'\';showList(\''+i[2]+'\',\''+i[1]+'\')"><span>'+ic(i[0])+'</span>'+i[1]+'</button>';
-  }).join('')+'<button class="card" onclick="openUpload()"><span>'+ic('cloud')+'</span>ارفع ملف يفيد زميلك</button>';
-}
-
-function showSections(){
-  view('الأقسام',
-   '<div class="sec" style="background:var(--blue);color:var(--navy)" onclick="showGeneral()"><h2>'+ic('book')+'القسم العام</h2><small>المناهج - الملخصات - أسئلة الامتحانات<br>وارفع ملف يفيد زميلك</small></div>'
-  +'<div class="sec" style="background:var(--pink);color:var(--rose)" onclick="showYears(\'الطب البشري\',\'heart\')"><h2>'+ic('heart','beat')+'الطب البشري</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>'
-  +'<div class="sec" style="background:var(--yel);color:var(--gold)" onclick="showYears(\'طب الأسنان\',\'tooth\')"><h2>'+ic('tooth')+'طب الأسنان</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>');
-}
-function showGeneral(){view('القسم العام',itemsHTML('general'),'showSections')}
-function showYears(name,icn){
-  yname=name;yic=icn;
-  var ar=['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة'],h='';
-  ar.forEach(function(y,i){
-    var ex=i>3?'<span class="badge">سنة الامتياز</span>':'';
-    h+='<div class="yr'+(i===0?' open':'')+'"><div onclick="this.parentNode.classList.toggle(\'open\')"><span>السنة '+y+'</span>'+ex+ic('down','arr')+'</div><div class="in">'+itemsHTML('years')+'</div></div>';
-  });
-  view(name,h,'showSections');
-}
-function showList(type,title){
-  var f=S.files.filter(function(x){return x.st==='a'&&x.type===type});
-  var h=f.length?f.map(function(x){
-    return '<div class="file" style="cursor:pointer" onclick="openFile(\''+x.path+'\')"><b class="fl">'+ic('clip')+x.name+'</b><small>من: '+x.from+'</small><span class="pill ok">تمت الموافقة</span></div>';
-  }).join(''):'<div class="empty">لا توجد ملفات هنا بعد.<br>كن أول من يرفع ملفاً يفيد زملاءك.</div>';
-  view(title,h+'<button class="btn" onclick="openUpload(\''+type+'\')">'+ic('cloud')+'ارفع ملف يفيد زميلك</button>','goBack');
-}
-function goBack(){from==='general'?showGeneral():showYears(yname,yic)}
-
-READY.then(function(u){
-  if(!u)return;
-  var t=new URLSearchParams(location.search).get('t');
-  var hit=ITEMS.filter(function(i){return i[2]===t})[0];
-  if(hit)showList(hit[2],hit[1]);else showSections();
+nav('home');
+document.querySelectorAll('.card span').forEach(function(s,i){
+  s.innerHTML=ic(['book','note','exam'][i]);
 });
 </script>
 </body>
