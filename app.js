@@ -22,6 +22,7 @@ function toast(t){
 
 /* ===== الحساب والبيانات ===== */
 var ME=null, ADMIN=false;
+var NAV_ACTIVE='';
 var MAX_MB=50;
 function nameFromEmail(e){return (e||'').split('@')[0]}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
@@ -56,6 +57,7 @@ var READY=(async function(){
   ME=s.user;
   var p=await sb.from('profiles').select('is_admin').eq('id',ME.id).maybeSingle();
   ADMIN=!!(p.data&&p.data.is_admin);
+  if(NAV_ACTIVE&&$('nav'))nav(NAV_ACTIVE);
   if(window.NEED_ADMIN&&!ADMIN){location.replace('home.html');return null}
   if(!window.PUBLIC_PAGE)await loadFiles();
   return ME;
@@ -96,13 +98,15 @@ document.addEventListener('click',function(e){
   m.classList.remove('hit');void m.getBoundingClientRect();m.classList.add('hit');
   setTimeout(function(){m.classList.remove('hit')},700);
 });
+// الشريط السفلي: زر الإدارة يظهر للأدمن فقط
 function nav(active){
+  NAV_ACTIVE=active;
   var items=[
     ['home.html','home','الرئيسية','home'],
     ['sections.html','grid','الأقسام','sections'],
     ['admin.html','shield','الإدارة','admin'],
     ['complaints.html','chat','الشكاوى','comp']
-  ];
+  ].filter(function(i){return i[3]!=='admin'||ADMIN});
   $('nav').innerHTML=items.map(function(i){
     return '<a href="'+i[0]+'" class="'+(i[3]===active?'on':'')+'">'+ic(i[1])+i[2]+'</a>';
   }).join('');
