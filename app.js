@@ -1,3 +1,4 @@
+var SCOPE={dept:'general',year:0};
 var SUPA_URL='https://atkrhmahmniiinhuooow.supabase.co';
 var SUPA_KEY='sb_publishable_u9j2dH29z8sT_jn48tdrug_4NqysjxK';
 var sb=supabase.createClient(SUPA_URL,SUPA_KEY);
@@ -22,12 +23,14 @@ function toast(t){
 /* ===== الحساب والبيانات ===== */
 var ME=null, ADMIN=false;
 function nameFromEmail(e){return (e||'').split('@')[0]}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function okPath(p){return /^u\/[0-9a-f-]{36}\/[0-9]+\.pdf$/.test(p)?p:''}
 
 async function loadFiles(){
   var r=await sb.from('uploads').select('*').order('created_at',{ascending:false});
   if(r.error){toast('تعذر تحميل الملفات');return}
   S.files=r.data.map(function(x){
-    return {id:x.id,name:x.name,from:x.from_name,type:x.type,st:x.status,path:x.file_path,size:x.size};
+    return {id:x.id,name:esc(x.name),from:esc(x.from_name),type:x.type,st:x.status,path:okPath(x.file_path),size:x.size,dept:x.dept,year:x.year};
   });
 }
 async function setStatus(id,st){
@@ -36,6 +39,7 @@ async function setStatus(id,st){
   await loadFiles();return true;
 }
 async function openFile(path){
+  if(!path){toast('تعذر فتح الملف');return}
   var w=window.open('','_blank');
   var r=await sb.storage.from('pdfs').createSignedUrl(path,3600);
   if(r.error){if(w)w.close();toast('تعذر فتح الملف');return}
@@ -148,7 +152,7 @@ async function upload(){
   var path='u/'+ME.id+'/'+Date.now()+'.pdf';
   var up=await sb.storage.from('pdfs').upload(path,PICKED,{contentType:'application/pdf'});
   if(up.error){btn.disabled=false;toast('فشل الرفع، حاول مرة أخرى');return}
-  var ins=await sb.from('uploads').insert({name:n,type:type,from_name:nameFromEmail(ME.email),file_path:path,size:PICKED.size});
+  var ins=await sb.from('uploads').insert({name:n,type:type,from_name:nameFromEmail(ME.email),file_path:path,size:PICKED.size,dept:SCOPE.dept,year:SCOPE.year});
   btn.disabled=false;
   if(ins.error){await sb.storage.from('pdfs').remove([path]);toast('فشل الحفظ، حاول مرة أخرى');return}
   $('fname').value='';
@@ -156,4 +160,4 @@ async function upload(){
   $('modal').classList.remove('on');
   toast('تم الرفع، بانتظار موافقة الإدارة');
   await loadFiles();
-  }
+}
