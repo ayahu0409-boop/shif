@@ -22,6 +22,7 @@ function toast(t){
 
 /* ===== الحساب والبيانات ===== */
 var ME=null, ADMIN=false;
+var MAX_MB=50;
 function nameFromEmail(e){return (e||'').split('@')[0]}
 function esc(s){return String(s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 function okPath(p){return /^u\/[0-9a-f-]{36}\/[0-9]+\.pdf$/.test(p)?p:''}
@@ -135,7 +136,7 @@ function pickFile(){
   if(!f)return;
   var isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name);
   if(!isPdf){toast('اختر ملف PDF فقط');resetFile();return}
-  if(f.size>10*1024*1024){toast('حجم الملف أكبر من 10 ميجا');resetFile();return}
+  if(f.size>MAX_MB*1024*1024){toast('حجم الملف أكبر من '+MAX_MB+' ميجا');resetFile();return}
   PICKED=f;
   var l=$('flabel');
   l.innerHTML=ic('clip');
@@ -148,16 +149,23 @@ async function upload(){
   if(!ME){toast('سجّل الدخول أولاً');return}
   var n=$('fname').value.trim()||PICKED.name.replace(/\.pdf$/i,'');
   var type=$('ftype').value, btn=$('upbtn');
-  btn.disabled=true;toast('جاري الرفع...');
+  btn.disabled=true;btn.textContent='جاري الرفع...';
   var path='u/'+ME.id+'/'+Date.now()+'.pdf';
-  var up=await sb.storage.from('pdfs').upload(path,PICKED,{contentType:'application/pdf'});
-  if(up.error){btn.disabled=false;toast('فشل الرفع، حاول مرة أخرى');return}
-  var ins=await sb.from('uploads').insert({name:n,type:type,from_name:nameFromEmail(ME.email),file_path:path,size:PICKED.size,dept:SCOPE.dept,year:SCOPE.year});
-  btn.disabled=false;
-  if(ins.error){await sb.storage.from('pdfs').remove([path]);toast('فشل الحفظ، حاول مرة أخرى');return}
-  $('fname').value='';
-  resetFile();
-  $('modal').classList.remove('on');
-  toast('تم الرفع، بانتظار موافقة الإدارة');
-  await loadFiles();
+  try{
+    var up=await Promise.race([
+      sb.storage.from('pdfs').upload(path,PICKED,{contentType:'application/pdf'}),
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('انتهت المهلة: النت بطيء أو الملف كبير'))},300000)})
+    ]);
+    if(up.error)throw up.error;
+    var ins=await sb.from('uploads').insert({name:n,type:type,from_name:nameFromEmail(ME.email),file_path:path,size:PICKED.size,dept:SCOPE.dept,year:SCOPE.year});
+    if(ins.error){await sb.storage.from('pdfs').remove([path]);throw ins.error}
+    $('fname').value='';
+    resetFile();
+    $('modal').classList.remove('on');
+    toast('تم الرفع، بانتظار موافقة الإدارة');
+    await loadFiles();
+  }catch(e){
+    alert('فشل الرفع: '+(e.message||e));
+  }
+  btn.disabled=false;btn.textContent='رفع للمراجعة';
 }
