@@ -31,12 +31,26 @@ function draw(){
   }).join('');
   var f=S.files.filter(function(x){return x.st===tab});
   $('files').innerHTML=f.length?f.map(function(x){
-    var b=x.st==='p'?'<div class="row"><button class="btn g" onclick="decide('+x.id+',\'a\')">موافق</button><button class="btn r" onclick="decide('+x.id+',\'r\')">رفض</button></div>':'';
+    var b='<div class="row">'
+      +(x.st==='p'?'<button class="btn g" onclick="decide('+x.id+',\'a\')">موافق</button><button class="btn r" onclick="decide('+x.id+',\'r\')">رفض</button>':'')
+      +'<button class="btn r" onclick="del('+x.id+')">حذف</button></div>';
     return '<div class="file"><b class="fl" style="cursor:pointer" onclick="openFile(\''+x.path+'\')">'+ic('clip')+'ملف: '+x.name+'</b><small>من: '+x.from+' • '+x.type+'</small>'+b+'</div>';
   }).join(''):'<div class="empty">لا توجد ملفات هنا</div>';
 }
 async function decide(id,st){
   if(await setStatus(id,st)){draw();toast(st==='a'?'تمت الموافقة':'تم الرفض')}
+}
+async function del(id){
+  var f=S.files.filter(function(x){return x.id===id})[0];
+  if(!f)return;
+  if(!confirm('حذف هذا الملف نهائياً؟ لا يمكن التراجع.'))return;
+  if(f.path){
+    var r=await sb.storage.from('pdfs').remove([f.path]);
+    if(r.error||!r.data||!r.data.length){toast('تعذر حذف الملف من التخزين');return}
+  }
+  var d=await sb.from('uploads').delete().eq('id',id);
+  if(d.error){toast('تعذر الحذف');return}
+  await loadFiles();draw();toast('تم الحذف');
 }
 READY.then(function(u){if(u)draw()});
 </script>
