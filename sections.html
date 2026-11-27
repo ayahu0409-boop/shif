@@ -20,47 +20,49 @@ nav('sections'); initUpload();
 
 // [اسم الأيقونة, اسم العرض, النوع المخزّن]
 var ITEMS=[['book','المناهج','منهج'],['note','الملخصات','ملخص'],['exam','أسئلة الامتحانات','أسئلة']];
-var from='general', yname='', yic='';
+var from='general', yname='', yic='', ydept='human';
 
 function view(title,html,back){
   $('box').innerHTML='<div class="top">'+(back?'<button onclick="'+back+'()">'+ic('back')+'</button>':'')+'<b>'+title+'</b></div>'+html;
 }
-function itemsHTML(f){
+// f: من وين جينا، d: القسم، y: السنة (0 للعام)
+function itemsHTML(f,d,y){
+  var sc='from=\''+f+'\';SCOPE={dept:\''+d+'\',year:'+y+'};';
   return ITEMS.map(function(i){
-    return '<button class="card" onclick="from=\''+f+'\';showList(\''+i[2]+'\',\''+i[1]+'\')"><span>'+ic(i[0])+'</span>'+i[1]+'</button>';
-  }).join('')+'<button class="card" onclick="openUpload()"><span>'+ic('cloud')+'</span>ارفع ملف يفيد زميلك</button>';
+    return '<button class="card" onclick="'+sc+'showList(\''+i[2]+'\',\''+i[1]+'\')"><span>'+ic(i[0])+'</span>'+i[1]+'</button>';
+  }).join('')+'<button class="card" onclick="'+sc+'openUpload()"><span>'+ic('cloud')+'</span>ارفع ملف يفيد زميلك</button>';
 }
 
 function showSections(){
   view('الأقسام',
    '<div class="sec" style="background:var(--blue);color:var(--navy)" onclick="showGeneral()"><h2>'+ic('book')+'القسم العام</h2><small>المناهج - الملخصات - أسئلة الامتحانات<br>وارفع ملف يفيد زميلك</small></div>'
-  +'<div class="sec" style="background:var(--pink);color:var(--rose)" onclick="showYears(\'الطب البشري\',\'heart\')"><h2>'+ic('heart','beat')+'الطب البشري</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>'
-  +'<div class="sec" style="background:var(--yel);color:var(--gold)" onclick="showYears(\'طب الأسنان\',\'tooth\')"><h2>'+ic('tooth')+'طب الأسنان</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>');
+  +'<div class="sec" style="background:var(--pink);color:var(--rose)" onclick="showYears(\'الطب البشري\',\'heart\',\'human\')"><h2>'+ic('heart','beat')+'الطب البشري</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>'
+  +'<div class="sec" style="background:var(--yel);color:var(--gold)" onclick="showYears(\'طب الأسنان\',\'tooth\',\'dental\')"><h2>'+ic('tooth')+'طب الأسنان</h2><small>٦ سنوات دراسية<br>(السنتان الخامسة والسادسة امتياز)</small></div>');
 }
-function showGeneral(){view('القسم العام',itemsHTML('general'),'showSections')}
-function showYears(name,icn){
-  yname=name;yic=icn;
+function showGeneral(){view('القسم العام',itemsHTML('general','general',0),'showSections')}
+function showYears(name,icn,dept){
+  yname=name;yic=icn;ydept=dept;
   var ar=['الأولى','الثانية','الثالثة','الرابعة','الخامسة','السادسة'],h='';
   ar.forEach(function(y,i){
     var ex=i>3?'<span class="badge">سنة الامتياز</span>':'';
-    h+='<div class="yr'+(i===0?' open':'')+'"><div onclick="this.parentNode.classList.toggle(\'open\')"><span>السنة '+y+'</span>'+ex+ic('down','arr')+'</div><div class="in">'+itemsHTML('years')+'</div></div>';
+    h+='<div class="yr'+(i===0?' open':'')+'"><div onclick="this.parentNode.classList.toggle(\'open\')"><span>السنة '+y+'</span>'+ex+ic('down','arr')+'</div><div class="in">'+itemsHTML('years',dept,i+1)+'</div></div>';
   });
   view(name,h,'showSections');
 }
 function showList(type,title){
-  var f=S.files.filter(function(x){return x.st==='a'&&x.type===type});
+  var f=S.files.filter(function(x){return x.st==='a'&&x.type===type&&x.dept===SCOPE.dept&&x.year===SCOPE.year});
   var h=f.length?f.map(function(x){
     return '<div class="file" style="cursor:pointer" onclick="openFile(\''+x.path+'\')"><b class="fl">'+ic('clip')+x.name+'</b><small>من: '+x.from+'</small><span class="pill ok">تمت الموافقة</span></div>';
   }).join(''):'<div class="empty">لا توجد ملفات هنا بعد.<br>كن أول من يرفع ملفاً يفيد زملاءك.</div>';
   view(title,h+'<button class="btn" onclick="openUpload(\''+type+'\')">'+ic('cloud')+'ارفع ملف يفيد زميلك</button>','goBack');
 }
-function goBack(){from==='general'?showGeneral():showYears(yname,yic)}
+function goBack(){from==='general'?showGeneral():showYears(yname,yic,ydept)}
 
 READY.then(function(u){
   if(!u)return;
   var t=new URLSearchParams(location.search).get('t');
   var hit=ITEMS.filter(function(i){return i[2]===t})[0];
-  if(hit)showList(hit[2],hit[1]);else showSections();
+  if(hit){from='general';SCOPE={dept:'general',year:0};showList(hit[2],hit[1])}else showSections();
 });
 </script>
 </body>
